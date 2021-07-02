@@ -8,6 +8,7 @@ from torchvision.models.detection.retinanet import RetinaNet
 import torchvision.transforms as transforms
 import cv2
 from PIL import Image
+import logging
 
 import config
 from toolkit import *
@@ -15,7 +16,7 @@ from dataset import *
 
 
 RETINANET = "RetinaNet"
-SSD = "SSD"
+SINGLESHOTDETECTOR  = "SSD(Single Shot Detector)"
 FASTERRCNN = "Faster RCNN"
 YOLOV3 = "YOLO v3"
 YOLOV5 = "YOLO v5"
@@ -98,7 +99,7 @@ class RetinaNet(DetectionCompare):
 class SSD(DetectionCompare):
     def __init__(self):
         super().__init__()
-        self.modelname = SSD
+        self.modelname = SINGLESHOTDETECTOR
         self.model = torchvision.models.detection.ssd300_vgg16(pretrained=True)
 
 class YOLO(DetectionCompare):
@@ -118,14 +119,38 @@ class YOLO(DetectionCompare):
 
     def predict(self, image):
         results = self.model(image)
+        #results.save()
         #TODO : Update with boxes, classes, scores
         return None, None, None
 
 
+def measure_model_prediction(model:DetectionCompare, imgs):
+# GPU measuring
+# https://deci.ai/resources/blog/measure-inference-time-deep-neural-networks/
+    
+# CPU measuring    
+    if torch.cuda.is_available():
+      starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+      starter.record()
+    else:
+      s = time.time()
+
+    results = model.predict(imgs)
+    if torch.cuda.is_available():
+      #print("cuda measurement")
+      ender.record()
+      torch.cuda.synchronize()
+      duration = starter.elapsed_time(ender)
+    else:
+      duration = (time.time() - s ) * 1000
+    
+    print(model.modelname, duration)
+    return results, duration
 
 if __name__ == "__main__":
-  
+    import timeit
     from torch.utils.data import DataLoader
+    import time 
     dataset = CustomDataset()
     custom_images = DataLoader(dataset=dataset, batch_size=1)
 
@@ -133,12 +158,14 @@ if __name__ == "__main__":
     ssd = SSD()
     retinanet = RetinaNet()
     yolo = YOLO(version='V5')
-        
+
+
+
     for idx, (imgs, gts, org_img) in enumerate(custom_images):
-        faster_rcnn_results = faster_rcnn.predict(imgs)
-        ssd_results = ssd.predict(imgs)
-        retinanet_results = retinanet.predict(imgs)
-        yolo_results = yolo.predict(org_img[0])
+        faster_rcnn_results, _ = measure_model_prediction(faster_rcnn, imgs) #faster_rcnn.predict(imgs)
+        ssd_results, _ = measure_model_prediction(ssd, imgs)  #ssd.predict(imgs)
+        retinanet_results, _ = measure_model_prediction(retinanet, imgs)  # retinanet.predict(imgs)
+        yolo_results, _ = measure_model_prediction(yolo, org_img[0])  #yolo.predict(org_img[0])
         print("finished")
     
     
