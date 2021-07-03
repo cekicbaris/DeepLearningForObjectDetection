@@ -1,14 +1,20 @@
-from sys import version
-from dataclasses import dataclass
+import time 
 import torch
 import torchvision
 import numpy as np
-from torchvision.models.detection import retinanet
-from torchvision.models.detection.retinanet import RetinaNet
+
 import torchvision.transforms as transforms
 import cv2
-from PIL import Image
 import logging
+
+from sys import version
+from dataclasses import dataclass
+
+from torchvision.models.detection import retinanet
+from torchvision.models.detection.retinanet import RetinaNet
+from torch.utils.data import DataLoader
+from PIL import Image
+
 
 import config
 from toolkit import *
@@ -42,23 +48,34 @@ class DetectionCompare():
     def predict(self, image):
         return self.predict_for_model(self.model, image)
 
+
     def predict_for_model(self,model, image, threshold=0.6):
 
         model.eval().to(config.DEVICE)
         with torch.no_grad():
             outputs = model(image) # get the predictions on the image
         # get all the scores
-        scores = outputs[0]['scores'].detach().cpu().numpy()
-
-        score_mask = scores >= threshold
-
+        #scores = outputs[0]['scores'].detach().cpu().numpy()
+        #score_mask = scores >= threshold
         # get all the predicted bounding boxes
         # get boxes above the threshold score
-        bboxes = outputs[0]['boxes'].detach().cpu().numpy()
-        boxes = bboxes[score_mask]
-        labels = outputs[0]['labels'].cpu().numpy()
-        labels = labels[score_mask].astype(np.int32)
-        scores = scores[score_mask]
+        #bboxes = outputs[0]['boxes'].detach().cpu().numpy()
+        #boxes = bboxes[score_mask]
+        #labels = outputs[0]['labels'].cpu().numpy()
+        #labels = labels[score_mask].astype(np.int32)
+        #scores = scores[score_mask]
+        
+
+        scores = [outputs[i]['scores'].detach().cpu().numpy() for i in range(len(outputs))]
+        score_mask = [scores[i] >= threshold for i in range(len(scores))]
+        scores = [ scores[i][score_mask[i]] for i in range(len(scores))]
+
+        bboxes = [outputs[i]['boxes'].detach().cpu().numpy() for i in range(len(outputs))]
+        boxes = [ bboxes[i][score_mask[i]] for i in range(len(bboxes))]
+
+        labels = [ outputs[i]['labels'].detach().cpu().numpy() for i in range(len(outputs))]
+        labels = [ labels[i][score_mask[i]] for i in range(len(labels))]
+        
         self.boxes, self.labels, self.scores = boxes, labels, scores
         return self.results()
 
@@ -106,7 +123,6 @@ class YOLO(DetectionCompare):
     def __init__(self, version='V3'):
         super().__init__()
         self.version = version
-        self.modelname = 'YOLO' + str(version)
         if self.version == 'V5':
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5s'
@@ -115,14 +131,15 @@ class YOLO(DetectionCompare):
             version_to_load = 'yolov3'
         
         # Model
+        self.modelname = 'YOLO' + str(version)
         self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True)
 
     def predict(self, image):
         results = self.model(image)
-        #results.save()
-        #TODO : Update with boxes, classes, scores
-        return None, None, None
-
+        self.boxes = [results.xyxy[i][:,:4].detach().cpu().numpy() for i in range(len(results.xyxy))]
+        self.scores = [results.xyxy[i][:,4].detach().cpu().numpy() for i in range(len(results.xyxy))]
+        self.labels = [results.xyxy[i][:,5].detach().cpu().numpy().astype(np.int32) for i in range(len(results.xyxy))]
+        return self.results()
 
 def measure_model_prediction(model:DetectionCompare, imgs):
 # GPU measuring
@@ -148,9 +165,8 @@ def measure_model_prediction(model:DetectionCompare, imgs):
     return results, duration
 
 if __name__ == "__main__":
-    import timeit
-    from torch.utils.data import DataLoader
-    import time 
+
+
     dataset = CustomDataset()
     custom_images = DataLoader(dataset=dataset, batch_size=1)
 
@@ -158,7 +174,6 @@ if __name__ == "__main__":
     ssd = SSD()
     retinanet = RetinaNet()
     yolo = YOLO(version='V5')
-
 
 
     for idx, (imgs, gts, org_img) in enumerate(custom_images):
