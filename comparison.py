@@ -6,6 +6,7 @@ import numpy as np
 import torchvision.transforms as transforms
 import cv2
 import logging
+import ntpath
 
 from sys import version
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ class Predictions:
     boxes:list
     scores:list
     labels:list
+    class_names:list
 
 
 class DetectionCompare():
@@ -75,6 +77,9 @@ class DetectionCompare():
 
         labels = [ outputs[i]['labels'].detach().cpu().numpy() for i in range(len(outputs))]
         labels = [ labels[i][score_mask[i]] for i in range(len(labels))]
+
+        
+        
         
         self.boxes, self.labels, self.scores = boxes, labels, scores
         return self.results()
@@ -92,9 +97,10 @@ class DetectionCompare():
     #         draw_boxes(boxes[idx], classes[idx], img)
 
     def results(self):
-        predictions = Predictions(self.modelname, self.boxes, self.scores, self.labels)
+        self.class_names = [[ COCO_NAMES[j]   for j in self.labels[i] ] for i in range(len(self.labels))  ]
+        predictions = Predictions(self.modelname, self.boxes, self.scores, self.labels, self.class_names)
         return predictions
-
+    
     # def __convert_classes_to_labels(self, classes):
     #     #pred_classes = [coco_names[labels[i]] for i in thresholded_preds_inidices]
     #     pass
@@ -123,22 +129,27 @@ class YOLO(DetectionCompare):
     def __init__(self, version='V3'):
         super().__init__()
         self.version = version
-        if self.version == 'V5':
+        if self.version == 'V5s':
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5s'
+        elif self.version == 'V5x':
+            model_to_load = 'ultralytics/yolov5'
+            version_to_load = 'yolov5x'
         else:
             model_to_load = 'ultralytics/yolov3'
             version_to_load = 'yolov3'
         
         # Model
         self.modelname = 'YOLO' + str(version)
-        self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True)
+        self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True, )
 
     def predict(self, image):
         results = self.model(image)
         self.boxes = [results.xyxy[i][:,:4].detach().cpu().numpy() for i in range(len(results.xyxy))]
         self.scores = [results.xyxy[i][:,4].detach().cpu().numpy() for i in range(len(results.xyxy))]
         self.labels = [results.xyxy[i][:,5].detach().cpu().numpy().astype(np.int32) for i in range(len(results.xyxy))]
+        self.labels = [ np.array([ COCO_NAMES.index(results.names[j]) for j in self.labels[i]])  for i in range(len(self.labels))  ]
+        
         return self.results()
 
 def measure_model_prediction(model:DetectionCompare, imgs):
@@ -173,15 +184,22 @@ if __name__ == "__main__":
     faster_rcnn = FasterRCNN()
     ssd = SSD()
     retinanet = RetinaNet()
-    yolo = YOLO(version='V5')
+    yolo = YOLO(version='V5x')
+    #yolo = YOLO(version='V5x')
 
 
-    for idx, (imgs, gts, org_img) in enumerate(custom_images):
-        faster_rcnn_results, _ = measure_model_prediction(faster_rcnn, imgs) #faster_rcnn.predict(imgs)
-        ssd_results, _ = measure_model_prediction(ssd, imgs)  #ssd.predict(imgs)
-        retinanet_results, _ = measure_model_prediction(retinanet, imgs)  # retinanet.predict(imgs)
+    for idx, (imgs, gts, org_img ) in enumerate(custom_images):
+        #faster_rcnn_results, _ = measure_model_prediction(faster_rcnn, imgs) #faster_rcnn.predict(imgs)
+        #ssd_results, _ = measure_model_prediction(ssd, imgs)  #ssd.predict(imgs)
+        #retinanet_results, _ = measure_model_prediction(retinanet, imgs)  # retinanet.predict(imgs)
         yolo_results, _ = measure_model_prediction(yolo, org_img[0])  #yolo.predict(org_img[0])
-        print("finished")
+
+        _ , name = get_filename_from_path(org_img[0])
+        filename = name + "_" + str(yolo_results.modelname)
+        if idx % 10 == 0:
+            draw_boxes(yolo_results.boxes[0], yolo_results.labels[0], org_img[0],  save=True, filename=filename)
+    
+    print("finished")
     
     
 

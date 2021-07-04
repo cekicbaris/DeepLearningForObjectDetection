@@ -2,3 +2,6 @@
 *.pt
 __pycache__/*
 .vscode*
+*.txt
+outputs/*
+input/*

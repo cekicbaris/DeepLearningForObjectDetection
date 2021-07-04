@@ -19,6 +19,11 @@ COCO_NAMES = [
     'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
 ]
 
+IMG_INPUT_FOLDER = "input/"
+IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
+VID_FORMATS = ['mov', 'avi', 'mp4', 'mpg', 'mpeg', 'm4v', 'wmv', 'mkv']  # acceptable video suffixes
+
+
 # this will help us create a different color for each class
 COLORS = np.random.uniform(0, 255, size=(len(COCO_NAMES), 3))
 
