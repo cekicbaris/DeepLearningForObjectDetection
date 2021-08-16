@@ -1,4 +1,5 @@
-import time 
+import time
+from typing import List 
 import torch
 import torchvision
 import numpy as np
@@ -37,6 +38,13 @@ class Predictions:
     class_names:list
     stats:dict
 
+@dataclass
+class Evalutions:
+    image_id:int
+    category_id:int
+    bbox:List
+    score:float
+
 class DetectionCompare():
     def __init__(self, images=config.DEFAULT_IMAGES ) -> None:
         
@@ -47,10 +55,10 @@ class DetectionCompare():
 
         self.modelname:str
         self.stats = {}
+        self.evaluations = []
 
     def predict(self, image):
         return self.predict_for_model(self.model, image)
-
 
     def predict_for_model(self,model, image, threshold=0.6):
 
@@ -79,18 +87,16 @@ class DetectionCompare():
         labels = [ outputs[i]['labels'].detach().cpu().numpy() for i in range(len(outputs))]
         labels = [ labels[i][score_mask[i]] for i in range(len(labels))]
 
-        
-        
-        
         self.boxes, self.labels, self.scores = boxes, labels, scores
         #return self.results()
     
-    def measure_model_prediction(self, imgs):
+    def measure_model_prediction(self, imgs, coco_image_ids):
     # GPU measuring
     # https://deci.ai/resources/blog/measure-inference-time-deep-neural-networks/
         
     # CPU measuring    
         self.imgs = imgs
+        self.coco_image_ids = coco_image_ids
         if torch.cuda.is_available():
             starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
             starter.record()
@@ -110,6 +116,7 @@ class DetectionCompare():
         logging.info(self.modelname + ":\t\t" + str(duration))
         self.stats['duration'] = duration
         return self.results()
+    
         
     def print_results(self):
         pass
@@ -127,6 +134,11 @@ class DetectionCompare():
         self.class_names = [[ COCO_NAMES[j]   for j in self.labels[i] ] for i in range(len(self.labels))  ]
         predictions = Predictions(self.modelname, self.boxes, self.scores, self.labels, self.class_names, self.stats)
         self.results_toJSON = Predictions(self.modelname, [ a.tolist() for a in self.boxes], [s.tolist() for s in self.scores], [l.tolist() for l in self.labels], self.class_names, self.stats).__dict__
+
+        for idx, coco_img_id in enumerate(self.coco_image_ids):
+            for label_idx, label in enumerate(self.labels[idx].tolist()):
+                evaluations = Evalutions(coco_img_id, label,self.boxes[idx].tolist()[label_idx], self.scores[idx].tolist()[label_idx]).__dict__
+                self.evaluations.append(evaluations)
         return predictions
     
 
@@ -191,10 +203,7 @@ class YOLO(DetectionCompare):
         
         return self.results()
 
-
-
 if __name__ == "__main__":
-
 
     dataset = CustomDataset(resume=True)
     start_time = time.time()
@@ -214,13 +223,15 @@ if __name__ == "__main__":
 
         for idx, (imgs, gts, org_img ) in enumerate(custom_images):
 
-            faster_rcnn_results = faster_rcnn.measure_model_prediction(imgs) #faster_rcnn.predict(imgs)
-            mask_rcnn_results = mask_rcnn.measure_model_prediction(imgs) #faster_rcnn.predict(imgs)
-            ssd_results = ssd.measure_model_prediction( imgs)  #ssd.predict(imgs)
-            retinanet_results= retinanet.measure_model_prediction( imgs)  # retinanet.predict(imgs)
-            yolo_v5x_results = yolo_v5x.measure_model_prediction(org_img[0])  #yolo.predict(org_img[0])
-            yolo_v5s_results = yolo_v5s.measure_model_prediction(org_img[0])  #yolo.predict(org_img[0])
-            yolo_v3_results = yolo_v3.measure_model_prediction(org_img[0])  #yolo.predict(org_img[0])
+            _ , name = get_filename_from_path(org_img[0])
+            coco_image_id = [name]
+            faster_rcnn_results = faster_rcnn.measure_model_prediction(imgs, coco_image_id) #faster_rcnn.predict(imgs)
+            mask_rcnn_results = mask_rcnn.measure_model_prediction(imgs,coco_image_id) #faster_rcnn.predict(imgs)
+            ssd_results = ssd.measure_model_prediction(imgs, coco_image_id)  #ssd.predict(imgs)
+            retinanet_results= retinanet.measure_model_prediction( imgs, coco_image_id)  # retinanet.predict(imgs)
+            yolo_v5x_results = yolo_v5x.measure_model_prediction(org_img[0],coco_image_id)  #yolo.predict(org_img[0])
+            yolo_v5s_results = yolo_v5s.measure_model_prediction(org_img[0],coco_image_id)  #yolo.predict(org_img[0])
+            yolo_v3_results = yolo_v3.measure_model_prediction(org_img[0],coco_image_id)  #yolo.predict(org_img[0])
 
             if idx % 50 == 0:
                 faster_rcnn.draw_box(org_img[0])
@@ -231,7 +242,7 @@ if __name__ == "__main__":
                 yolo_v5x.draw_box(org_img[0])
                 dataset.save_stats() # checkpointing
 
-            _ , name = get_filename_from_path(org_img[0])
+            
             image_stats['original_image'] = org_img[0]
             image_stats['name'] = name
             image_stats['faster_rcnn_results'] = faster_rcnn.results_toJSON
