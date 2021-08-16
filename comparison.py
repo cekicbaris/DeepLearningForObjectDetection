@@ -145,6 +145,11 @@ class FasterRCNN(DetectionCompare):
         self.modelname = FASTERRCNN
         self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
 
+class MaskRCNN(DetectionCompare):
+    def __init__(self, ):
+        super().__init__()
+        self.modelname = FASTERRCNN
+        self.model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
 
 class RetinaNet(DetectionCompare):
     def __init__(self, min_size=800):
@@ -197,6 +202,7 @@ if __name__ == "__main__":
         custom_images = DataLoader(dataset=dataset, batch_size=1)
 
         faster_rcnn = FasterRCNN()
+        mask_rcnn = MaskRCNN()
         ssd = SSD()
         retinanet = RetinaNet()
         yolo_v5x = YOLO(version='V5x')
@@ -207,7 +213,9 @@ if __name__ == "__main__":
         image_stats ={}
 
         for idx, (imgs, gts, org_img ) in enumerate(custom_images):
+
             faster_rcnn_results = faster_rcnn.measure_model_prediction(imgs) #faster_rcnn.predict(imgs)
+            mask_rcnn_results = mask_rcnn.measure_model_prediction(imgs) #faster_rcnn.predict(imgs)
             ssd_results = ssd.measure_model_prediction( imgs)  #ssd.predict(imgs)
             retinanet_results= retinanet.measure_model_prediction( imgs)  # retinanet.predict(imgs)
             yolo_v5x_results = yolo_v5x.measure_model_prediction(org_img[0])  #yolo.predict(org_img[0])
@@ -227,6 +235,7 @@ if __name__ == "__main__":
             image_stats['original_image'] = org_img[0]
             image_stats['name'] = name
             image_stats['faster_rcnn_results'] = faster_rcnn.results_toJSON
+            image_stats['mask_rcnn_results'] = mask_rcnn.results_toJSON
             image_stats['ssd_results'] = ssd.results_toJSON
             image_stats['retinanet_results'] = retinanet.results_toJSON
             image_stats['yolo_v5x_results'] = yolo_v5x.results_toJSON
