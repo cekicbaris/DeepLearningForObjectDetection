@@ -22,7 +22,8 @@ class CustomDataset(Dataset):
         files = glob.glob(str( Path(config.IMG_INPUT_FOLDER) / '**' / '*.*'), recursive=True)
         self.images = sorted([x.replace('/', os.sep) for x in files if x.split('.')[-1].lower() in config.IMG_FORMATS])
         self.stats = []
-        if resume:
+        self.resume = resume
+        if self.resume:
             self.images = self.list_unprocess_files()
             self.stats = self.read_stats()
 
@@ -53,7 +54,6 @@ class CustomDataset(Dataset):
     def add_stats(self, idx, original_img,  image_stats):
         self.stats.append(image_stats.copy())
         
-    
     def save_stats(self):
         with open(config.STAT_FILE, 'w') as f:
             json.dump(self.stats , f)
@@ -66,6 +66,23 @@ class CustomDataset(Dataset):
         else:
             stat_file = []        
         return stat_file
+
+
+    def save_eval(self, modelname, evaluations):
+        filename = config.EVALUATION_FOLDER + modelname + ".json"
+        with open(filename, 'w') as f:
+            json.dump(evaluations , f)
+
+    def read_eval(self,modelname):
+        filename = config.EVALUATION_FOLDER + modelname + ".json"
+        path = Path(filename) 
+        if path.exists():
+            with open(filename, 'r') as f:
+                eval_file = json.load(f)
+        else:
+            eval_file = []        
+        return eval_file
+
 
     def list_processed_files(self):
         stat_file = self.read_stats()

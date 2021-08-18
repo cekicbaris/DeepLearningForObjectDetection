@@ -19,7 +19,10 @@ COCO_NAMES = [
     'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
 ]
 
-IMG_INPUT_FOLDER = "input/"
+IMG_INPUT_FOLDER = "dataset/input/"
+IMG_OUTPUT_FOLDER = "dataset/output/"
+EVALUATION_FOLDER = "eval/"
+IMG_EXTENSION = ".jpg"
 STAT_FILE = "stats/stats.json"
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
 VID_FORMATS = ['mov', 'avi', 'mp4', 'mpg', 'mpeg', 'm4v', 'wmv', 'mkv']  # acceptable video suffixes
