@@ -175,6 +175,9 @@ class RetinaNet(DetectionCompare):
         self.modelname = RETINANET
         self.min_size = min_size
         self.model = torchvision.models.detection.retinanet_resnet50_fpn(pretrained=True, min_size=self.min_size)
+        
+        
+
 
 class SSD(DetectionCompare):
     def __init__(self):
