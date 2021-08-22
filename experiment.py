@@ -175,9 +175,6 @@ class RetinaNet(DetectionCompare):
         self.modelname = RETINANET
         self.min_size = min_size
         self.model = torchvision.models.detection.retinanet_resnet50_fpn(pretrained=True, min_size=self.min_size)
-        
-        
-
 
 class SSD(DetectionCompare):
     def __init__(self):
@@ -240,8 +237,7 @@ if __name__ == "__main__":
 
         yolo_v3 = YOLO(version='V3')
         models.append(yolo_v3)
-
-        
+               
         # if resume is enabled then first load the evaluations.
         if dataset.resume: 
             for model in models:
@@ -265,11 +261,11 @@ if __name__ == "__main__":
                 
                 image_stats[model.modelname] = model.results_toJSON
 
-                if idx % 50 == 0 and idx != 0:
+                if idx % 2 == 0 and idx != 0:
                     model.draw_box(org_img[0])
                     dataset.save_stats() # checkpointing
                     dataset.save_eval(model.modelname, model.evaluations)
-        
+            
             dataset.add_stats(idx, org_img[0], image_stats)
             elapsed_time = ( time.time() - start_time )
             logging.info("---- Elapsed time : \t" + str(idx) + " - " + str(elapsed_time))

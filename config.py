@@ -25,6 +25,7 @@ EVALUATION_FOLDER = "eval/"
 IMG_EXTENSION = ".jpg"
 STAT_FILE = "stats/stats.json"
 MEASURES_FILE = "stats/measures.json"
+COCO_VALIDATION_SET_FILE = "dataset/annotations/instances_val2017.json"
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
 VID_FORMATS = ['mov', 'avi', 'mp4', 'mpg', 'mpeg', 'm4v', 'wmv', 'mkv']  # acceptable video suffixes
 
