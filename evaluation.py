@@ -1,11 +1,8 @@
-import matplotlib.pyplot as plt
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
-import numpy as np
-import skimage.io as io
+import json
+
 from config import *
 from toolkit import * 
-import json
+
 
 ann_file = COCO_VALIDATION_SET_FILE
 

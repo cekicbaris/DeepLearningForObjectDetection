@@ -38,3 +38,7 @@ DEFAULT_IMAGES = [
                     'https://ultralytics.com/images/zidane.jpg',
                     'https://ultralytics.com/images/bus.jpg' 
                 ]
+
+
+# streamlit settings. 
+DEFAULT_CONFIDENCE_THRESHOLD = 0.5

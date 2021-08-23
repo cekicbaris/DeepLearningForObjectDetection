@@ -1,7 +1,7 @@
 import config
 import numpy as np
-import pandas as pd
-import cv2
+#mport pandas as pd
+#import cv2
 import os
 from PIL import Image 
 from pathlib import Path
@@ -18,6 +18,9 @@ class CustomDataset(Dataset):
     def __init__(self, images=[], resume=False):
         self.transform = transforms.Compose([
                             transforms.ToTensor(),
+                            # transforms.Normalize(
+                            #       mean=[0.485, 0.457, 0.407],
+                            #       std=[1,1,1])
                             ])
         files = glob.glob(str( Path(config.IMG_INPUT_FOLDER) / '**' / '*.*'), recursive=True)
         self.images = sorted([x.replace('/', os.sep) for x in files if x.split('.')[-1].lower() in config.IMG_FORMATS])
@@ -44,9 +47,11 @@ class CustomDataset(Dataset):
         original_image = self.images[index]
         image = Image.open(original_image).convert('RGB')
 
-        image_array = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        #image_array = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
+        
         image = self.transform(image).to(config.DEVICE)
+       
 
         #image = image.unsqueeze(0) # add a batch dimension
         return image, ground_truth, original_image

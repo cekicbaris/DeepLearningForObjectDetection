@@ -4,19 +4,11 @@ import torch
 import torchvision
 import numpy as np
 
-import torchvision.transforms as transforms
-import cv2
 import logging
-import ntpath
+import torchvision.transforms as transforms
 
-from sys import version
 from dataclasses import dataclass
-
-from torchvision.models.detection import retinanet
-from torchvision.models.detection.retinanet import RetinaNet
 from torch.utils.data import DataLoader
-from PIL import Image
-
 
 import config
 from toolkit import *
@@ -220,23 +212,23 @@ if __name__ == "__main__":
         faster_rcnn = FasterRCNN()
         models.append(faster_rcnn)
 
-        mask_rcnn = MaskRCNN()
-        models.append(mask_rcnn)
+        # mask_rcnn = MaskRCNN()
+        # models.append(mask_rcnn)
 
-        ssd = SSD()
-        models.append(ssd)
+        # ssd = SSD()
+        # models.append(ssd)
 
-        retinanet = RetinaNet()
-        models.append(retinanet)
+        # retinanet = RetinaNet()
+        # models.append(retinanet)
 
-        yolo_v5x = YOLO(version='V5x')
-        models.append(yolo_v5x)
+        # yolo_v5x = YOLO(version='V5x')
+        # models.append(yolo_v5x)
 
         yolo_v5s = YOLO(version='V5s')
         models.append(yolo_v5s)
 
-        yolo_v3 = YOLO(version='V3')
-        models.append(yolo_v3)
+        # yolo_v3 = YOLO(version='V3')
+        # models.append(yolo_v3)
                
         # if resume is enabled then first load the evaluations.
         if dataset.resume: 
@@ -263,14 +255,14 @@ if __name__ == "__main__":
 
                 if idx % 2 == 0 and idx != 0:
                     model.draw_box(org_img[0])
-                    dataset.save_stats() # checkpointing
-                    dataset.save_eval(model.modelname, model.evaluations)
+                    #dataset.save_stats() # checkpointing
+                    #dataset.save_eval(model.modelname, model.evaluations)
             
             dataset.add_stats(idx, org_img[0], image_stats)
             elapsed_time = ( time.time() - start_time )
             logging.info("---- Elapsed time : \t" + str(idx) + " - " + str(elapsed_time))
         
-        dataset.save_stats()
+        #dataset.save_stats()
 
         for model in models:
             dataset.save_eval(model.modelname, model.evaluations)
