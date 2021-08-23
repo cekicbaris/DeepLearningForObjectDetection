@@ -21,10 +21,12 @@ def draw_boxes(boxes, classes, image, save=False, filename=None):
             color, 2
         )
         cv2.putText(image, str(COCO_NAMES[classes[i]]), (int(box[0]), int(box[1]-5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2, 
-                    lineType=cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1, 
+                    lineType=cv2.LINE_4)
     if save:
          cv2.imwrite(f"{IMG_OUTPUT_FOLDER}{filename}", image)
+
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)     
     return image
 
 

@@ -7,3 +7,6 @@ Pillow==8.2.0
 matplotlib==3.4.2
 pycocotools==2.0.2
 opencv-python
+fastapi
+uvicorn
+python-multipart

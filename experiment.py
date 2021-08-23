@@ -60,16 +60,6 @@ class DetectionCompare():
         model.eval().to(config.DEVICE)
         with torch.no_grad():
             outputs = model(image) # get the predictions on the image
-        # get all the scores
-        #scores = outputs[0]['scores'].detach().cpu().numpy()
-        #score_mask = scores >= threshold
-        # get all the predicted bounding boxes
-        # get boxes above the threshold score
-        #bboxes = outputs[0]['boxes'].detach().cpu().numpy()
-        #boxes = bboxes[score_mask]
-        #labels = outputs[0]['labels'].cpu().numpy()
-        #labels = labels[score_mask].astype(np.int32)
-        #scores = scores[score_mask]
         
 
         scores = [outputs[i]['scores'].detach().cpu().numpy() for i in range(len(outputs))]
@@ -209,8 +199,8 @@ if __name__ == "__main__":
     if len(dataset.images) != 0:
         custom_images = DataLoader(dataset=dataset, batch_size=1)
 
-        faster_rcnn = FasterRCNN()
-        models.append(faster_rcnn)
+        #faster_rcnn = FasterRCNN()
+        #models.append(faster_rcnn)
 
         # mask_rcnn = MaskRCNN()
         # models.append(mask_rcnn)
@@ -237,7 +227,7 @@ if __name__ == "__main__":
         
         image_stats ={}
 
-        for idx, (imgs, gts, org_img ) in enumerate(custom_images):
+        for idx, (imgs, gts, org_img) in enumerate(custom_images):
 
             _ , name = get_filename_from_path(org_img[0])
             coco_image_id = [name]
@@ -250,6 +240,9 @@ if __name__ == "__main__":
                     model.measure_model_prediction(org_img[0], coco_image_id)    
                 else:    
                     model.measure_model_prediction(imgs, coco_image_id)
+                
+
+                #model.measure_model_prediction(Image.open(org_img[0]), coco_image_id)                    
                 
                 image_stats[model.modelname] = model.results_toJSON
 

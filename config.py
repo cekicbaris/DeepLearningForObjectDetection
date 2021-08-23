@@ -42,3 +42,14 @@ DEFAULT_IMAGES = [
 
 # streamlit settings. 
 DEFAULT_CONFIDENCE_THRESHOLD = 0.5
+
+
+MODELS = [
+    {'model_id': 'faster_rcnn', 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json'},
+    {'model_id': 'mask_rcnn', 'model_name': 'Mask RCNN', 'filename':'mask_rcnn.json'},
+    {'model_id': 'retinanet', 'model_name': 'RetinaNet', 'filename':'RetinaNet.json'},
+    {'model_id': 'ssd', 'model_name': 'SSD', 'filename':'SSD.json'},
+    {'model_id': 'yolov3', 'model_name': 'YOLO v3', 'filename':'YOLOV3.json'},
+    {'model_id': 'yolov5s', 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json'},
+    {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json'}    
+]
