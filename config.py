@@ -45,7 +45,7 @@ DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 
 
 MODELS = [
-    {'model_id': 'faster_rcnn', 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json'},
+    {'model_id': 'faster_rcnn', 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json' },
     {'model_id': 'mask_rcnn', 'model_name': 'Mask RCNN', 'filename':'mask_rcnn.json'},
     {'model_id': 'retinanet', 'model_name': 'RetinaNet', 'filename':'RetinaNet.json'},
     {'model_id': 'ssd', 'model_name': 'SSD', 'filename':'SSD.json'},
@@ -53,3 +53,11 @@ MODELS = [
     {'model_id': 'yolov5s', 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json'},
     {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json'}    
 ]
+
+FASTERRCNN = MODELS[0]['model_id']
+MASKRCNN = MODELS[1]['model_id']
+RETINANET = MODELS[2]['model_id']
+SINGLESHOTDETECTOR  = MODELS[3]['model_id']
+YOLOV3 = MODELS[4]['model_id']
+YOLOV5S = MODELS[5]['model_id']
+YOLOV5X = MODELS[6]['model_id']

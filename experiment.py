@@ -5,6 +5,7 @@ import torchvision
 import numpy as np
 
 import logging
+from tqdm import tqdm
 import torchvision.transforms as transforms
 
 from dataclasses import dataclass
@@ -15,12 +16,7 @@ from toolkit import *
 from dataset import * 
 
 
-RETINANET = "RetinaNet"
-SINGLESHOTDETECTOR  = "SSD"
-FASTERRCNN = "faster_rcnn"
-MASKRCNN = "mask_rcnn"
-YOLOV3 = "YOLO_v3"
-YOLOV5 = "YOLO_v5"
+
 
 @dataclass
 class Predictions:
@@ -171,15 +167,17 @@ class YOLO(DetectionCompare):
         if self.version == 'V5s':
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5s'
+            self.modelname = YOLOV5S
         elif self.version == 'V5x':
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5x'
+            self.modelname = YOLOV5X
         else:
             model_to_load = 'ultralytics/yolov3'
             version_to_load = 'yolov3'
+            self.modelname = YOLOV3
         
         # Model
-        self.modelname = 'YOLO' + str(version)
         self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True, )
 
     def predict(self, image):
@@ -199,57 +197,55 @@ if __name__ == "__main__":
     if len(dataset.images) != 0:
         custom_images = DataLoader(dataset=dataset, batch_size=1)
 
-        #faster_rcnn = FasterRCNN()
-        #models.append(faster_rcnn)
+        faster_rcnn = FasterRCNN()
+        models.append(faster_rcnn)
 
-        # mask_rcnn = MaskRCNN()
-        # models.append(mask_rcnn)
+        mask_rcnn = MaskRCNN()
+        models.append(mask_rcnn)
 
-        # ssd = SSD()
-        # models.append(ssd)
+        ssd = SSD()
+        models.append(ssd)
 
-        # retinanet = RetinaNet()
-        # models.append(retinanet)
+        retinanet = RetinaNet()
+        models.append(retinanet)
 
-        # yolo_v5x = YOLO(version='V5x')
-        # models.append(yolo_v5x)
+        yolo_v5x = YOLO(version='V5x')
+        models.append(yolo_v5x)
 
         yolo_v5s = YOLO(version='V5s')
         models.append(yolo_v5s)
 
-        # yolo_v3 = YOLO(version='V3')
-        # models.append(yolo_v3)
+        yolo_v3 = YOLO(version='V3')
+        models.append(yolo_v3)
                
         # if resume is enabled then first load the evaluations.
         if dataset.resume: 
             for model in models:
                 dataset.read_eval(model.modelname)
-        
-        image_stats ={}
 
-        for idx, (imgs, gts, org_img) in enumerate(custom_images):
+        for idx, (imgs, gts, org_img) in tqdm(enumerate(custom_images)):
 
             _ , name = get_filename_from_path(org_img[0])
             coco_image_id = [name]
-
+            image_stats ={}
             image_stats['original_image'] = org_img[0]
             image_stats['name'] = name
             
             for model in models:
-                if 'YOLO' in model.modelname:
+                if 'yolo' in model.modelname :
                     model.measure_model_prediction(org_img[0], coco_image_id)    
                 else:    
                     model.measure_model_prediction(imgs, coco_image_id)
                 
-
                 #model.measure_model_prediction(Image.open(org_img[0]), coco_image_id)                    
                 
-                image_stats[model.modelname] = model.results_toJSON
+                #image_stats[model.modelname] = model.results_toJSON
+                image_stats[model.modelname] = model.stats['duration']
 
                 if idx % 2 == 0 and idx != 0:
                     model.draw_box(org_img[0])
-                    #dataset.save_stats() # checkpointing
-                    #dataset.save_eval(model.modelname, model.evaluations)
+                    dataset.save_stats() # checkpointing
+                    dataset.save_eval(model.modelname, model.evaluations)
             
             dataset.add_stats(idx, org_img[0], image_stats)
             elapsed_time = ( time.time() - start_time )

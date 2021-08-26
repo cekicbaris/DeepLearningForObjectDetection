@@ -26,18 +26,14 @@ def process_image(uploaded_img):
 st.title("Deep Learning for Object Detection")
 st.sidebar.title("Settings")
 
-# Add a slider to the sidebar:
-confidence = st.sidebar.slider(
-    "Confidence threshold", 0.0, 1.0, DEFAULT_CONFIDENCE_THRESHOLD, 0.05
-)
-
-
-st.sidebar.markdown("Select Detection Algorithm")
 alg = {}
-for model in MODELS:
-      alg[model['model_id']] = eval("st.sidebar.checkbox('"+ model['model_name'] + "')")
+
+algorithm = st.sidebar.radio("Select Detection Algorithm",
+        [model['model_name'] for model in MODELS])
 
 uploaded_img = st.file_uploader("Please upload and image", type=["jpg", "jpeg"])
+
+st.subheader(algorithm)
 
 if uploaded_img is not None:
     processed_image = process_image(uploaded_img)
