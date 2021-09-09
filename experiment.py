@@ -172,6 +172,11 @@ class YOLO(DetectionCompare):
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5x'
             self.modelname = YOLOV5X
+        elif self.version == 'V5-BiFPN':
+            model_to_load = 'ultralytics/yolov5'
+            version_to_load = 'yolov5-bifpn'
+            self.modelname = YOLOV5BIFPN
+        
         else:
             model_to_load = 'ultralytics/yolov3'
             version_to_load = 'yolov3'
@@ -217,7 +222,9 @@ if __name__ == "__main__":
 
         yolo_v3 = YOLO(version='V3')
         models.append(yolo_v3)
-               
+
+        
+
         # if resume is enabled then first load the evaluations.
         if dataset.resume: 
             for model in models:

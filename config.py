@@ -51,7 +51,7 @@ MODELS = [
     {'model_id': 'ssd', 'model_name': 'SSD', 'filename':'SSD.json'},
     {'model_id': 'yolov3', 'model_name': 'YOLO v3', 'filename':'YOLOV3.json'},
     {'model_id': 'yolov5s', 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json'},
-    {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json'}    
+    {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json'},      
 ]
 
 FASTERRCNN = MODELS[0]['model_id']
