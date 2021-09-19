@@ -172,11 +172,6 @@ class YOLO(DetectionCompare):
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5x'
             self.modelname = YOLOV5X
-        elif self.version == 'V5-BiFPN':
-            model_to_load = 'ultralytics/yolov5'
-            version_to_load = 'yolov5-bifpn'
-            self.modelname = YOLOV5BIFPN
-        
         else:
             model_to_load = 'ultralytics/yolov3'
             version_to_load = 'yolov3'
