@@ -20,7 +20,8 @@ COCO_NAMES = [
 ]
 
 
-IMG_INPUT_FOLDER = "dataset/input/"
+IMG_INPUT_FOLDER = "dataset/input/val2017"
+
 IMG_INPUT_FOLDER_DRY_RUN = "dataset/input_small"
 IMG_OUTPUT_FOLDER = "dataset/output/"
 EVALUATION_FOLDER = "eval/"

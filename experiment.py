@@ -186,9 +186,6 @@ class YOLO(DetectionCompare):
         self.labels = [results.xyxy[i][:,5].detach().cpu().numpy().astype(np.int32) for i in range(len(results.xyxy))]
         self.labels = [ np.array([ COCO_NAMES.index(results.names[j]) for j in self.labels[i]])  for i in range(len(self.labels))  ]
         
-        #return self.results()
-
-
 class Experiment():
     def __init__(self, name, resume=False, dry_run=True) -> None:
         self.experiment_name = name
@@ -300,27 +297,13 @@ class Experiment():
 
 if __name__ == "__main__":
 
-    exp = Experiment(name="Exp1", dry_run=True)
-
-    yolo_v3 = YOLO(version='V3')
+    exp = Experiment(name="Unit_Test", dry_run=True)
     yolo_v5s = YOLO(version='V5s')
-    yolo_v5x = YOLO(version='V5x')
-    faster_rcnn = FasterRCNN()
-    mask_rcnn = MaskRCNN()
-    retinanet = RetinaNet()
-    ssd = SSD()
-
-    exp.add_model(yolo_v3) 
     exp.add_model(yolo_v5s)
-    exp.add_model(yolo_v5x) 
-    exp.add_model(mask_rcnn)
-    exp.add_model(faster_rcnn)
-    exp.add_model(retinanet)
-    exp.add_model(ssd)
-
-
     exp.run_experiment()
-    df = exp.evaluate_results()
+    exp.evaluate_results()
+    exp.plot_results()
+
  
 
 
