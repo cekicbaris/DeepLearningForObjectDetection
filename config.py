@@ -19,13 +19,21 @@ COCO_NAMES = [
     'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
 ]
 
+
 IMG_INPUT_FOLDER = "dataset/input/"
+IMG_INPUT_FOLDER_DRY_RUN = "dataset/input_small"
 IMG_OUTPUT_FOLDER = "dataset/output/"
 EVALUATION_FOLDER = "eval/"
 IMG_EXTENSION = ".jpg"
 STAT_FILE = "stats/stats.json"
 MEASURES_FILE = "stats/measures.json"
 COCO_VALIDATION_SET_FILE = "dataset/annotations/instances_val2017.json"
+EXPERIMENTS_FOLDER  = 'experiments/' 
+EXPERIMENT_STATE_FILE = 'experiment.json'
+MODEL_SUMMARY = 'stats/modelsummary.json'
+MODEL_SUMMARY_PLOT = 'stats/modelsummary.png'
+
+
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
 VID_FORMATS = ['mov', 'avi', 'mp4', 'mpg', 'mpeg', 'm4v', 'wmv', 'mkv']  # acceptable video suffixes
 

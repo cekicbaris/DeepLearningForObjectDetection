@@ -1,0 +1,1 @@
+[{"model_name": "yolov3", "AP": 0.4147264168284312, "Inference": 1827.95729637146}, {"model_name": "faster_rcnn", "AP": 0.4544463784127321, "Inference": 5852.713179588318}]

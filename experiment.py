@@ -16,8 +16,6 @@ from toolkit import *
 from dataset import * 
 
 
-
-
 @dataclass
 class Predictions:
     modelname:str
@@ -94,7 +92,7 @@ class DetectionCompare():
             torch.cuda.synchronize()
             duration = starter.elapsed_time(ender)
         else:
-            duration = (time.time() - s ) 
+            duration = (time.time() - s ) * 1000
         
         logging.info(self.modelname + ":\t\t" + str(duration))
         self.stats['duration'] = duration
@@ -126,9 +124,10 @@ class DetectionCompare():
         return predictions
     
 
-    def draw_box(self, img):
+    def draw_box(self, img, experiment_name):
         _ , name = get_filename_from_path(img)
-        filename = name + "_" + str(self.modelname) + config.IMG_EXTENSION
+        filename = config.IMG_OUTPUT_FOLDER + experiment_name + '/' + name + "_" + str(self.modelname) + config.IMG_EXTENSION
+        check_path(filename, True)
         draw_boxes(self.boxes[0], self.labels[0], img ,  save=True, filename=filename)
     
     # def __convert_classes_to_labels(self, classes):
@@ -163,12 +162,12 @@ class SSD(DetectionCompare):
 class YOLO(DetectionCompare):
     def __init__(self, version='V3'):
         super().__init__()
-        self.version = version
-        if self.version == 'V5s':
+        self.version = version.lower()
+        if self.version == 'v5s':
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5s'
             self.modelname = YOLOV5S
-        elif self.version == 'V5x':
+        elif self.version == 'v5x':
             model_to_load = 'ultralytics/yolov5'
             version_to_load = 'yolov5x'
             self.modelname = YOLOV5X
@@ -189,78 +188,141 @@ class YOLO(DetectionCompare):
         
         #return self.results()
 
-if __name__ == "__main__":
 
-    dataset = CustomDataset(resume=False)
-    start_time = time.time()
-    models = []
-    if len(dataset.images) != 0:
-        custom_images = DataLoader(dataset=dataset, batch_size=1)
-
-        faster_rcnn = FasterRCNN()
-        models.append(faster_rcnn)
-
-        mask_rcnn = MaskRCNN()
-        models.append(mask_rcnn)
-
-        ssd = SSD()
-        models.append(ssd)
-
-        retinanet = RetinaNet()
-        models.append(retinanet)
-
-        yolo_v5x = YOLO(version='V5x')
-        models.append(yolo_v5x)
-
-        yolo_v5s = YOLO(version='V5s')
-        models.append(yolo_v5s)
-
-        yolo_v3 = YOLO(version='V3')
-        models.append(yolo_v3)
-
+class Experiment():
+    def __init__(self, name, resume=False, dry_run=True) -> None:
+        self.experiment_name = name
         
+        self.experiment_folder =  config.EXPERIMENTS_FOLDER + self.experiment_name + '/'
+        self.experiment_state_file = self.experiment_folder + config.EXPERIMENT_STATE_FILE
 
-        # if resume is enabled then first load the evaluations.
-        if dataset.resume: 
-            for model in models:
-                dataset.read_eval(model.modelname)
+        self.resume = False
 
-        for idx, (imgs, gts, org_img) in tqdm(enumerate(custom_images)):
+        self.models = []
+        self.stats_collector = Stats(experiment_folder=self.experiment_folder)
+        self.dry_run = dry_run
+        
+        self.images, self.stats = [],[]
 
-            _ , name = get_filename_from_path(org_img[0])
+        self.load_dataset()
+
+    def add_model(self,model):
+        self.models.append(model)
+
+    def load_dataset(self):
+        self.dataset = CustomDataset(images=self.images, resume=self.resume, dry_run=self.dry_run)
+        self.images = DataLoader(dataset=self.dataset, batch_size=1)
+
+        if len(self.dataset.images) == 0:
+            logging.warning('no image in dataset')
+
+    def run_experiment(self):
+        start_time = time.time()
+
+        for idx, (imgs, gts, org_img) in enumerate(self.images):
+            name = get_filename_from_path(org_img[0], True)
             coco_image_id = [name]
+            
             image_stats ={}
             image_stats['original_image'] = org_img[0]
             image_stats['name'] = name
             
-            for model in models:
+            for model in self.models:
                 if 'yolo' in model.modelname :
                     model.measure_model_prediction(org_img[0], coco_image_id)    
                 else:    
                     model.measure_model_prediction(imgs, coco_image_id)
-                
-                #model.measure_model_prediction(Image.open(org_img[0]), coco_image_id)                    
-                
-                #image_stats[model.modelname] = model.results_toJSON
+
                 image_stats[model.modelname] = model.stats['duration']
 
-                if idx % 2 == 0 and idx != 0:
-                    model.draw_box(org_img[0])
-                    dataset.save_stats() # checkpointing
-                    dataset.save_eval(model.modelname, model.evaluations)
+                if idx % 5 == 0 and idx != 0:
+                    model.draw_box(org_img[0], experiment_name = self.experiment_name)
+                    self.stats_collector.save_stats() # checkpointing
+                    self.stats_collector.save_eval(model.modelname, model.evaluations)
             
-            dataset.add_stats(idx, org_img[0], image_stats)
+            self.stats_collector.add_stats(idx, org_img[0], image_stats)
             elapsed_time = ( time.time() - start_time )
             logging.info("---- Elapsed time : \t" + str(idx) + " - " + str(elapsed_time))
         
-        #dataset.save_stats()
+        self.stats_collector.save_stats()
 
-        for model in models:
-            dataset.save_eval(model.modelname, model.evaluations)
+        for model in self.models:
+            self.stats_collector.save_eval(model.modelname, model.evaluations)
+    
+    def evaluate_results(self):
+        stats = []
+        summary = []
+        
+        for model in self.models:
+            print("ModelName : \t", model.modelname + "_________________________________________")
+            stat = evaluate(model.modelname, detections_file = self.experiment_folder + 'eval/' +  model.modelname + '.json',image_ids=self.dataset.image_ids )
+            model_summary = {}
+            model_summary['model_name'] = model.modelname
+            model_summary['AP'] = stat[0]['AP']
+            summary.append(model_summary)
+            stats.append(stat)
+        
+        self.stats_collector.measures = stats
+        self.stats_collector.save_measures()
 
-        print("finished")
-    else:
-        logging.info("no images left for processing")
+        stat_files = [self.stats_collector.stat_file]
+        stat_dfs = [pd.read_json(file) for file in stat_files]
+        final_df = pd.concat(stat_dfs, axis=1)
+        describe_num_df = final_df.describe().drop(columns=['name'])
+        describe_num_df.reset_index(inplace=True)
 
-    elapsed_time = ( time.time() - start_time )
-    logging.info("Total time : " + str(elapsed_time))
+        for idx, model_summary in enumerate(summary):
+            summary[idx]['Inference'] = describe_num_df[model_summary['model_name']][1]
+
+        self.stats_collector.save_summary(summary)
+        return self.stats_collector.summary_to_pandas()
+    
+    def plot_results(self, scale=500, mAP=1):
+        df = self.stats_collector.summary_to_pandas()
+        if df.empty:
+            df = self.evaluate_results()
+        
+        sns.relplot(x="Inference", y="AP", data=df, hue="model_name", s=500)
+        sns.set(style="ticks")
+        plt.grid()
+        plt.xlabel('Inference Speed in ms ( '+ self.experiment_name +')')
+        plt.ylabel('mAP')
+        plt.xlim(0, scale)
+        plt.ylim(0, mAP)
+
+        # add annotations one by one with a loop
+        for line in range(0,df.shape[0]):
+            plt.text(df.Inference[line]-0.10, df.AP[line]+0.02, df.model_name[line], horizontalalignment='left', size='medium', color='black', weight='regular')
+
+        filename = self.experiment_folder + config.MODEL_SUMMARY_PLOT
+        plt.savefig(filename)
+
+
+if __name__ == "__main__":
+
+    exp = Experiment(name="Exp1", dry_run=True)
+
+    yolo_v3 = YOLO(version='V3')
+    yolo_v5s = YOLO(version='V5s')
+    yolo_v5x = YOLO(version='V5x')
+    faster_rcnn = FasterRCNN()
+    mask_rcnn = MaskRCNN()
+    retinanet = RetinaNet()
+    ssd = SSD()
+
+    exp.add_model(yolo_v3) 
+    exp.add_model(yolo_v5s)
+    exp.add_model(yolo_v5x) 
+    exp.add_model(mask_rcnn)
+    exp.add_model(faster_rcnn)
+    exp.add_model(retinanet)
+    exp.add_model(ssd)
+
+
+    exp.run_experiment()
+    df = exp.evaluate_results()
+ 
+
+
+
+    

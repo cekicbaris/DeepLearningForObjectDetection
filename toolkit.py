@@ -7,6 +7,119 @@ import torch
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
+from pathlib import Path
+import glob
+import json
+import config
+import pandas as pd
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+class Stats():
+    def __init__(self,  experiment_folder='experiments/'):
+        self.experiment_folder = experiment_folder 
+        self.stats = []
+        self.images = []
+        self.measures = []
+        self.stat_file = self.experiment_folder + config.STAT_FILE
+    
+    def add_stats(self, idx, original_img,  image_stats):
+        self.stats.append(image_stats.copy())
+
+    def check_path(self, file, create_if_not_exits=False):
+        path = Path(file) 
+        if path.exists():
+            return True
+        else:
+            if create_if_not_exits:
+                parent_directory_of_file = path.parent
+                parent_directory_of_file.mkdir(parents=True, exist_ok=True)
+                return True
+            return False
+
+    def save_stats(self):
+        check_path(self.stat_file, True)
+        with open(self.stat_file, 'w') as f:
+            json.dump(self.stats , f)
+
+    def read_stats(self, model_name):
+        file = Path(self.stat_file)
+        if file.exists():
+            with open(self.stat_file, 'r') as f:
+                stat_file = json.load(f)
+        else:
+            stat_file = []        
+        return stat_file
+    
+    def save_eval(self, modelname, evaluations):
+        filename = self.experiment_folder + config.EVALUATION_FOLDER + modelname + ".json"
+        check_path(filename, True)
+        with open(filename, 'w') as f:
+            json.dump(evaluations , f)
+    
+    def save_summary(self, model_summary):
+        filename = self.experiment_folder + config.MODEL_SUMMARY
+        check_path(filename, True)
+        with open(filename, 'w') as f:
+            json.dump(model_summary , f)
+    
+    def summary_to_pandas(self):
+        filename = self.experiment_folder + config.MODEL_SUMMARY
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        df = pd.DataFrame(data)
+        return df
+
+    def read_eval(self,modelname):
+        filename = self.experiment_folder + config.EVALUATION_FOLDER + modelname + ".json"
+        path = Path(filename) 
+        if path.exists():
+            with open(filename, 'r') as f:
+                eval_file = json.load(f)
+        else:
+            eval_file = []        
+        return eval_file
+
+    def save_measures(self):
+        filename = self.experiment_folder + config.MEASURES_FILE 
+        check_path(filename, True)
+        with open(filename, 'w') as f:
+            json.dump(self.measures , f)
+
+    def list_processed_files(self):
+        stat_file = self.read_stats()
+        processed_files = [i['original_image'] for i in stat_file]
+        return processed_files
+    
+    def list_unprocess_files(self):
+        processed = self.list_processed_files()
+        unprocessed = [x for x in self.images if x not in processed]
+        return unprocessed
+
+
+def check_path(file, create_if_not_exits=False):
+    path = Path(file) 
+    if path.exists():
+        return True
+    else:
+        if create_if_not_exits:
+            parent_directory_of_file = path.parent
+            parent_directory_of_file.mkdir(parents=True, exist_ok=True)
+            return True
+        return False
+
+ 
+
+def describe_stats(stat_files):
+    stat_dfs = [pd.read_json(file) for file in stat_files]
+    final_df = pd.concat(stat_dfs, axis=1)
+    describe_num_df = final_df.describe().drop(columns=['name'])
+    describe_num_df.reset_index(inplace=True)
+    return describe_num_df
+
 
 def draw_boxes(boxes, classes, image, save=False, filename=None):
     image = cv2.cvtColor(np.array(Image.open(image).convert('RGB')), cv2.COLOR_RGB2BGR)
@@ -24,15 +137,17 @@ def draw_boxes(boxes, classes, image, save=False, filename=None):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1, 
                     lineType=cv2.LINE_4)
     if save:
-         cv2.imwrite(f"{IMG_OUTPUT_FOLDER}{filename}", image)
+         cv2.imwrite(f"{filename}", image)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)     
     return image
 
 
-def get_filename_from_path(path):
+def get_filename_from_path(path,return_only_name=False):
     filename = ntpath.basename(path)
     k = filename.rfind(".")
+    if return_only_name:
+        return filename[:k]
     return filename, filename[:k]
 
 def xyxy2xywh(x):
@@ -68,14 +183,17 @@ def ground_truth_bbox(image_id):
     draw_boxes(image_boxes, image_categories, image, save=True, filename=filename)
 
 
-def evaluate(image_ids, model_name, detections_file=None, by_category=True):
+def evaluate(model_name, detections_file=None, by_category=False, image_ids=[]):
     #https://www.programmersought.com/article/3065285708/
     ann_file = COCO_VALIDATION_SET_FILE
 
+    if image_ids == []:
+        ground_truth=COCO(ann_file)
+        image_ids=sorted(ground_truth.getImgIds())
+
     if detections_file == None:
         detections_file = "eval/" + model_name + '.json'
-    else:
-        detections_file = "eval/" + detections_file 
+        
     ground_truth=COCO(ann_file)
     imgIds=image_ids
 
@@ -112,7 +230,7 @@ def evaluate(image_ids, model_name, detections_file=None, by_category=True):
     if by_category:
         for idx, category in enumerate(COCO_NAMES):
             if category != 'N/A' and category != '__background__':
-                print("Category: " , category)
+                #print("Category: " , category)
                 cocoEval.params.catIds = [idx]
                 cocoEval.evaluate()
                 cocoEval.accumulate()
@@ -126,19 +244,21 @@ def evaluate(image_ids, model_name, detections_file=None, by_category=True):
 
     return stats
 
+
+    
+
+
 if __name__ == "__main__":
     #ground_truth_bbox("000000020333")
 
-    evaluate([int('000000007108')],"mask_rcnn", by_category=False)
+    """ evaluate([int('000000007108')],"mask_rcnn", by_category=False)
     evaluate([int('000000007108')],"faster_rcnn", by_category=False)
     evaluate([int('000000007108')],"SSD", by_category=False)
     evaluate([int('000000007108')],"RetinaNet", by_category=False)
     evaluate([int('000000007108')],"YOLOV3", by_category=False)
     evaluate([int('000000007108')],"YOLOV5s", by_category=False)
     evaluate([int('000000007108')],"YOLOV5x", by_category=False)
-    
-    
-    
+     """
     
 
 

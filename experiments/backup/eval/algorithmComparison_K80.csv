@@ -1,0 +1,8 @@
+﻿Algorithm,AP,Inference
+Faster RCNN,33.7,330.79
+Mask RCNN,34.4,400.95
+RetinaNet,26.7,396.47
+SSD,16.7,99.18
+YOLO v3,36.8,105.9
+YOLO v5s,31.2,35.6
+YOLO v5x,45.3,190.73
