@@ -1,9 +1,10 @@
 import torch
 import numpy as np
 
-
+# PyTorch device variable to run the model on CPU or on GPU(cuda)
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# MSCOCO 91 classes
 COCO_NAMES = [
     '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
     'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A', 'stop sign',
@@ -19,10 +20,9 @@ COCO_NAMES = [
     'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
 ]
 
-
-IMG_INPUT_FOLDER = "dataset/input/val2017"
-
-IMG_INPUT_FOLDER_DRY_RUN = "dataset/input_small"
+# Stat collector settings
+IMG_INPUT_FOLDER = "dataset/input/val2017/"
+IMG_INPUT_FOLDER_DRY_RUN = "dataset/input_small/"
 IMG_OUTPUT_FOLDER = "dataset/output/"
 EVALUATION_FOLDER = "eval/"
 IMG_EXTENSION = ".jpg"
@@ -34,33 +34,30 @@ EXPERIMENT_STATE_FILE = 'experiment.json'
 MODEL_SUMMARY = 'stats/modelsummary.json'
 MODEL_SUMMARY_PLOT = 'stats/modelsummary.png'
 
-
+#Allowed Image file extenions. 
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
-VID_FORMATS = ['mov', 'avi', 'mp4', 'mpg', 'mpeg', 'm4v', 'wmv', 'mkv']  # acceptable video suffixes
-
 
 # this will help us create a different color for each class
 COLORS = np.random.uniform(0, 255, size=(len(COCO_NAMES), 3))
 
-
+# To run model with default images. 
 DEFAULT_IMAGES = [
                     'https://ultralytics.com/images/zidane.jpg',
                     'https://ultralytics.com/images/bus.jpg' 
                 ]
 
-
 # streamlit settings. 
 DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 
-
 MODELS = [
-    {'model_id': 'faster_rcnn', 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json' },
-    {'model_id': 'mask_rcnn', 'model_name': 'Mask RCNN', 'filename':'mask_rcnn.json'},
-    {'model_id': 'retinanet', 'model_name': 'RetinaNet', 'filename':'RetinaNet.json'},
-    {'model_id': 'ssd', 'model_name': 'SSD', 'filename':'SSD.json'},
-    {'model_id': 'yolov3', 'model_name': 'YOLO v3', 'filename':'YOLOV3.json'},
-    {'model_id': 'yolov5s', 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json'},
-    {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json'},      
+    {'model_id': 'yolov5s', 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json','model_definition' : 'YOLO(version="V5s")'},
+    {'model_id': 'yolov3', 'model_name': 'YOLO v3', 'filename':'YOLOV3.json','model_definition' : 'YOLO(version="V3")'},
+    {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json','model_definition' : 'YOLO(version="V5x")'},      
+    {'model_id': 'faster_rcnn', 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json' , 'model_definition' : 'FasterRCNN()'},
+    {'model_id': 'mask_rcnn', 'model_name': 'Mask RCNN', 'filename':'mask_rcnn.json' , 'model_definition' : 'MaskRCNN()'},
+    {'model_id': 'retinanet', 'model_name': 'RetinaNet', 'filename':'RetinaNet.json','model_definition' : 'RetinaNet()'},
+    {'model_id': 'ssd', 'model_name': 'SSD', 'filename':'SSD.json', 'model_definition' : 'RetinaNet()'},
+   
 ]
 
 FASTERRCNN = MODELS[0]['model_id']

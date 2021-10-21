@@ -15,9 +15,11 @@ import config
 from toolkit import *
 from dataset import * 
 
-
 @dataclass
 class Predictions:
+    """
+    Data class to store prediction results. 
+    """
     modelname:str
     boxes:list
     scores:list
@@ -27,34 +29,46 @@ class Predictions:
 
 @dataclass
 class Evalutions:
+    """
+    Data class to store evaluation results. 
+    """
     image_id:int
     filename:str
     category_id:int
     bbox:List
     score:float
 
-class DetectionCompare():
+class Detection():
+    """
+    This is the main detection class, it will serve as base class to models. 
+    Every object detection algorihm implements this base class.
+    """
     def __init__(self, images=config.DEFAULT_IMAGES ) -> None:
-        
-        # define the torchvision image transforms
-        self.transform = transforms.Compose([
-                            transforms.ToTensor(),
-                            ])
-
         self.modelname:str
         self.stats = {}
         self.evaluations = []
         self.xywh = []
 
     def predict(self, image):
+        """
+        This proxy method is responsible to make prediction.  
+        It will can be overriden.
+        """
         return self.predict_for_model(self.model, image)
 
-    def predict_for_model(self,model, image, threshold=0.6):
+    def predict_for_model(self,image,model, threshold=0.6):
+        """
+        This method is responsible to make prediction.  
+
+        Args:
+            image ([tensor]): tensor
+            model ([string]): detection algorithm
+            threshold (float, optional): Defaults to 0.6.
+        """
 
         model.eval().to(config.DEVICE)
         with torch.no_grad():
             outputs = model(image) # get the predictions on the image
-        
 
         scores = [outputs[i]['scores'].detach().cpu().numpy() for i in range(len(outputs))]
         score_mask = [scores[i] >= threshold for i in range(len(scores))]
@@ -68,17 +82,25 @@ class DetectionCompare():
 
         self.boxes, self.labels, self.scores = boxes, labels, scores
 
-        
         #return self.results()
     
     def measure_model_prediction(self, imgs, coco_image_ids):
-    # GPU measuring
-    # https://deci.ai/resources/blog/measure-inference-time-deep-neural-networks/
-        
-    # CPU measuring    
+        """     
+            # model prediction performance on CPU and GPU
+            # for GPU performance
+            # https://deci.ai/resources/blog/measure-inference-time-deep-neural-networks/
+       
+        Args:
+            imgs ([type]): [description]
+            coco_image_ids ([type]): [description]
+
+        """
+ 
+        # CPU measuring    
         self.imgs = imgs
         self.coco_image_ids = coco_image_ids
         if torch.cuda.is_available():
+            # GPU measurement is differnet than CPU , therefore torch utility is used istead of time.time()
             starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
             starter.record()
         else:
@@ -102,17 +124,13 @@ class DetectionCompare():
             self.xywh.append(xyxy2xywh(box))       
         
         return self.results()
-    
-        
-    def print_results(self):
-        pass
-        #              xmin        ymin         xmax        ymax  confidence  class    name
-        # 0  749.628418   43.006378  1148.310181  708.739380    0.876501      0  person
-        # 1  433.496307  433.949524   517.907959  715.133118    0.658130     27     tie
-        # 2  113.315887  196.359955  1093.051270  710.308350    0.596343      0  person
-        # 3  986.139587  304.344147  1027.974243  420.158539    0.285012     27     tie
 
     def results(self):
+        """
+            This method is reponsible to prepare results in prediction data class and json.
+        Returns:
+            prediction as data class
+        """
         self.class_names = [[ COCO_NAMES[j]   for j in self.labels[i] ] for i in range(len(self.labels))  ]
         predictions = Predictions(self.modelname, self.boxes, self.scores, self.labels, self.class_names, self.stats)
         self.results_toJSON = Predictions(self.modelname, [ a.tolist() for a in self.boxes], [s.tolist() for s in self.scores], [l.tolist() for l in self.labels], self.class_names, self.stats).__dict__
@@ -123,43 +141,65 @@ class DetectionCompare():
                 self.evaluations.append(evaluations)
         return predictions
     
-
     def draw_box(self, img, experiment_name):
+        """
+        draws bounding box to the predicted image.  
+        """
         _ , name = get_filename_from_path(img)
         filename = config.IMG_OUTPUT_FOLDER + experiment_name + '/' + name + "_" + str(self.modelname) + config.IMG_EXTENSION
         check_path(filename, True)
         draw_boxes(self.boxes[0], self.labels[0], img ,  save=True, filename=filename)
-    
-    # def __convert_classes_to_labels(self, classes):
-    #     #pred_classes = [coco_names[labels[i]] for i in thresholded_preds_inidices]
-    #     pass
 
-class FasterRCNN(DetectionCompare):
+
+class FasterRCNN(Detection):
+    """
+    Faster RCNN implementation of Detection Experiment Framework
+    https://pytorch.org/vision/stable/models.html#id57
+    """
     def __init__(self, ):
         super().__init__()
         self.modelname = FASTERRCNN
         self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
 
-class MaskRCNN(DetectionCompare):
+class MaskRCNN(Detection):
+    """
+    Mask RCNN implementation of Detection Experiment Framework
+    https://pytorch.org/vision/stable/models.html#id63
+
+    """
     def __init__(self, ):
         super().__init__()
         self.modelname = MASKRCNN
         self.model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
 
-class RetinaNet(DetectionCompare):
+class RetinaNet(Detection):
+    """
+    RetinaNet implementation of Detection Experiment Framework
+    https://pytorch.org/vision/stable/models.html#id58
+
+    """
+    
     def __init__(self, min_size=800):
         super().__init__()
         self.modelname = RETINANET
         self.min_size = min_size
         self.model = torchvision.models.detection.retinanet_resnet50_fpn(pretrained=True, min_size=self.min_size)
 
-class SSD(DetectionCompare):
+class SSD(Detection):
+    """
+    SSD implementation of of Detection Experiment Framework
+    https://pytorch.org/vision/stable/models.html#id59
+    """
     def __init__(self):
         super().__init__()
         self.modelname = SINGLESHOTDETECTOR
         self.model = torchvision.models.detection.ssd300_vgg16(pretrained=True)
 
-class YOLO(DetectionCompare):
+class YOLO(Detection):
+    """
+    YOLO implementation of of Detection Experiment Framework
+    https://pytorch.org/hub/ultralytics_yolov5/
+    """   
     def __init__(self, version='V3'):
         super().__init__()
         self.version = version.lower()
@@ -180,13 +220,23 @@ class YOLO(DetectionCompare):
         self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True, )
 
     def predict(self, image):
+        """
+        YOLO spesific prediction impelementation, 
+        PytorchHub model is different then the torchvision implementation, therefore it is overriden. 
+        """
         results = self.model(image)
         self.boxes = [results.xyxy[i][:,:4].detach().cpu().numpy() for i in range(len(results.xyxy))]
         self.scores = [results.xyxy[i][:,4].detach().cpu().numpy() for i in range(len(results.xyxy))]
         self.labels = [results.xyxy[i][:,5].detach().cpu().numpy().astype(np.int32) for i in range(len(results.xyxy))]
         self.labels = [ np.array([ COCO_NAMES.index(results.names[j]) for j in self.labels[i]])  for i in range(len(self.labels))  ]
-        
+
+
 class Experiment():
+    """
+    This class is the experiment class.
+    It adds models to experiment scopes, collect stats and store every 
+    different experiment(name) to differnt folders in experiments folder
+    """
     def __init__(self, name, resume=False, dry_run=True) -> None:
         self.experiment_name = name
         
@@ -207,13 +257,17 @@ class Experiment():
         self.models.append(model)
 
     def load_dataset(self):
-        self.dataset = CustomDataset(images=self.images, resume=self.resume, dry_run=self.dry_run)
+        self.dataset = ExperimentDataset(images=self.images, resume=self.resume, dry_run=self.dry_run)
         self.images = DataLoader(dataset=self.dataset, batch_size=1)
 
         if len(self.dataset.images) == 0:
             logging.warning('no image in dataset')
 
     def run_experiment(self):
+        """
+        This method iterates over dataloader for every image and runs 
+        the prediction in the models directory of experiment. 
+        """
         start_time = time.time()
 
         for idx, (imgs, gts, org_img) in enumerate(self.images):
@@ -247,6 +301,9 @@ class Experiment():
             self.stats_collector.save_eval(model.modelname, model.evaluations)
     
     def evaluate_results(self):
+        """
+        This method is responsible to generate mAP, mAR for MSCOCO style IoU thresholds and  inference type in ms. 
+        """
         stats = []
         summary = []
         
@@ -294,18 +351,14 @@ class Experiment():
         filename = self.experiment_folder + config.MODEL_SUMMARY_PLOT
         plt.savefig(filename)
 
-
 if __name__ == "__main__":
-
+    """
+    Unite tests
+    """
     exp = Experiment(name="Unit_Test", dry_run=True)
-    yolo_v5s = YOLO(version='V5s')
-    exp.add_model(yolo_v5s)
+    #yolo_v5s = YOLO(version='V5s')
+    ssd = SSD()
+    exp.add_model(ssd)
     exp.run_experiment()
     exp.evaluate_results()
     exp.plot_results()
-
- 
-
-
-
-    

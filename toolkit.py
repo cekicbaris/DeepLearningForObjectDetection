@@ -112,7 +112,6 @@ def check_path(file, create_if_not_exits=False):
         return False
 
  
-
 def describe_stats(stat_files):
     stat_dfs = [pd.read_json(file) for file in stat_files]
     final_df = pd.concat(stat_dfs, axis=1)
@@ -153,8 +152,6 @@ def get_filename_from_path(path,return_only_name=False):
 def xyxy2xywh(x):
     # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    #y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
-    #y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
     y[:, 2] = x[:, 2] - x[:, 0]  # width
     y[:, 3] = x[:, 3] - x[:, 1]  # height
     return y
@@ -164,14 +161,13 @@ def ground_truth_bbox(image_id):
     coco_all_cats_idx = coco.getCatIds()
     coco_categories_names = coco.loadCats(coco_all_cats_idx)
 
-
     annotation_ids = coco.getAnnIds(imgIds=[int(image_id)], 
                         catIds=coco_all_cats_idx, iscrowd=None)
     image_annotations = coco.loadAnns(annotation_ids)
     image_categories = []
     image_boxes = []
 
-    image = IMG_INPUT_FOLDER + 'val2017/' + image_id + IMG_EXTENSION
+    image = IMG_INPUT_FOLDER  + image_id + IMG_EXTENSION
 
     for annotation in image_annotations:
         image_categories.append(annotation['category_id'])
@@ -179,7 +175,7 @@ def ground_truth_bbox(image_id):
         # x, y, width, height => ( coordinates ) x, y, x + width , y + height
         image_boxes.append([bbox[0],bbox[1],bbox[0]+bbox[2],bbox[1]+bbox[3]])
 
-    filename =  image_id + "_GT" +  IMG_EXTENSION
+    filename = IMG_OUTPUT_FOLDER + image_id + "_GT" +  IMG_EXTENSION
     draw_boxes(image_boxes, image_categories, image, save=True, filename=filename)
 
 
@@ -244,13 +240,8 @@ def evaluate(model_name, detections_file=None, by_category=False, image_ids=[]):
 
     return stats
 
-
-    
-
-
 if __name__ == "__main__":
-    #ground_truth_bbox("000000020333")
-
+    ground_truth_bbox("000000020333")
     """ evaluate([int('000000007108')],"mask_rcnn", by_category=False)
     evaluate([int('000000007108')],"faster_rcnn", by_category=False)
     evaluate([int('000000007108')],"SSD", by_category=False)

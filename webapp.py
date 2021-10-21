@@ -6,7 +6,7 @@ from PIL import Image
 from torchvision import transforms as transforms
 
 @st.cache
-def process_image(uploaded_img):
+def process_image(uploaded_img, algorithm):
     transform = transforms.Compose([
                             transforms.ToTensor(),
                             ])
@@ -14,14 +14,21 @@ def process_image(uploaded_img):
     image = Image.open(uploaded_img).convert('RGB')
     image = transform(image).to(DEVICE)
 
-    #faster_rcnn = FasterRCNN()
-    #faster_rcnn.measure_model_prediction([image],[0])
+    model = [eval(model['model_definition']) for model in MODELS if model['model_name'] == algorithm]
+    model = model[0]
 
-    yolo_v5s = YOLO(version='V5s')
-    yolo_v5s.measure_model_prediction(Image.open(uploaded_img),[0])
+    #model.measure_model_prediction(Image.open(uploaded_img),[0])
+    start_time = time.time()
+    if 'yolo' in algorithm.lower():
+        model.measure_model_prediction(Image.open(uploaded_img),[0])
+    else:
+        model.measure_model_prediction([image],[0])  
 
-    processed_image = draw_boxes(yolo_v5s.boxes[0], yolo_v5s.labels[0], uploaded_img)
-    return processed_image
+    end_time = time.time()
+
+    processed_image = draw_boxes(model.boxes[0], model.labels[0], uploaded_img)
+    process_duration = ( end_time - start_time ) * 1000
+    return processed_image, process_duration
 
 st.title("Deep Learning for Object Detection")
 st.sidebar.title("Settings")
@@ -36,7 +43,9 @@ uploaded_img = st.file_uploader("Please upload and image", type=["jpg", "jpeg"])
 st.subheader(algorithm)
 
 if uploaded_img is not None:
-    processed_image = process_image(uploaded_img)
+    processed_image, duration = process_image(uploaded_img, algorithm)
+    st.code('Inference Time : '+ str(duration) + ' miliseconds')
     st.image(
         processed_image, caption=f"Processed image", use_column_width=True,
     )
+

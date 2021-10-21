@@ -9,8 +9,22 @@ from toolkit import *
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as transforms
 
-class CustomDataset(Dataset):
+class ExperimentDataset(Dataset):
+    """
+    This dataset loads all data in the dataset folder along with labels. 
+    It recursively search the configured folder in config.py and all images loaded
+    Then they are converted to tensor via torchvision transforms. 
+    """
     def __init__(self, images=[], resume=False, dry_run=False):
+        """
+        It may run both in resume mode or scratch. If it is resuming then it expectes image list to be provided. 
+        If dry_run is True then it only loads 10 images for test runs.
+
+        Args:
+            images (list, optional):  Defaults to [].
+            resume (bool, optional):  Defaults to False.
+            dry_run (bool, optional): Defaults to False.
+        """
         self.transform = transforms.Compose([
                             transforms.ToTensor(),
                             # transforms.Normalize(
@@ -18,7 +32,6 @@ class CustomDataset(Dataset):
                             #       std=[1,1,1])
                             ])
 
-        
         files = glob.glob(str( Path(config.IMG_INPUT_FOLDER) / '**' / '*.*'), recursive=True)
         if dry_run:
             files = glob.glob(str( Path(config.IMG_INPUT_FOLDER_DRY_RUN) / '**' / '*.*'), recursive=True)
@@ -28,14 +41,11 @@ class CustomDataset(Dataset):
         if self.resume:
             self.images = images
 
-
         sa = os.sep + 'images' + os.sep
         sb = os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
         self.label_files =  ['txt'.join(x.replace(sa, sb, 1).rsplit(x.split('.')[-1], 1)) for x in self.images]
-
         self.image_ids = [ int(get_filename_from_path(x, return_only_name = True)) for x in self.images]
         
-
     def __len__(self):
         return len(self.images)
     
@@ -45,4 +55,3 @@ class CustomDataset(Dataset):
         image = Image.open(original_image).convert('RGB')
         image = self.transform(image).to(config.DEVICE)
         return image, ground_truth, original_image
-
