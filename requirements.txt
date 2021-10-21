@@ -10,3 +10,6 @@ opencv-python
 fastapi
 uvicorn
 python-multipart
+tqdm
+seaborn
+pyyaml

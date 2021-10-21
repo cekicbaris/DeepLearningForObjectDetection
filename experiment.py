@@ -54,7 +54,7 @@ class Detection():
         This proxy method is responsible to make prediction.  
         It will can be overriden.
         """
-        return self.predict_for_model(self.model, image)
+        return self.predict_for_model(image,self.model,)
 
     def predict_for_model(self,image,model, threshold=0.6):
         """
@@ -169,7 +169,7 @@ class MaskRCNN(Detection):
     """
     def __init__(self, ):
         super().__init__()
-        self.modelname = MASKRCNN
+        self.modelname = MASK_RCNN
         self.model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
 
 class RetinaNet(Detection):
@@ -181,7 +181,7 @@ class RetinaNet(Detection):
     
     def __init__(self, min_size=800):
         super().__init__()
-        self.modelname = RETINANET
+        self.modelname = RETINA_NET
         self.min_size = min_size
         self.model = torchvision.models.detection.retinanet_resnet50_fpn(pretrained=True, min_size=self.min_size)
 
@@ -205,15 +205,15 @@ class YOLO(Detection):
         self.version = version.lower()
         if self.version == 'v5s':
             model_to_load = 'ultralytics/yolov5'
-            version_to_load = 'yolov5s'
+            version_to_load = YOLOV5S
             self.modelname = YOLOV5S
         elif self.version == 'v5x':
             model_to_load = 'ultralytics/yolov5'
-            version_to_load = 'yolov5x'
+            version_to_load = YOLOV5X
             self.modelname = YOLOV5X
         else:
             model_to_load = 'ultralytics/yolov3'
-            version_to_load = 'yolov3'
+            version_to_load = YOLOV3
             self.modelname = YOLOV3
         
         # Model
@@ -309,7 +309,7 @@ class Experiment():
         
         for model in self.models:
             print("ModelName : \t", model.modelname + "_________________________________________")
-            stat = evaluate(model.modelname, detections_file = self.experiment_folder + 'eval/' +  model.modelname + '.json',image_ids=self.dataset.image_ids )
+            stat = evaluate(model.modelname, detections_file = self.experiment_folder + 'eval/' +  model.modelname + '.json',by_category=True, image_ids=self.dataset.image_ids )
             model_summary = {}
             model_summary['model_name'] = model.modelname
             model_summary['AP'] = stat[0]['AP']
@@ -356,9 +356,10 @@ if __name__ == "__main__":
     Unite tests
     """
     exp = Experiment(name="Unit_Test", dry_run=True)
-    #yolo_v5s = YOLO(version='V5s')
     ssd = SSD()
+    yolov5x = YOLO(version='v5x')
+    exp.add_model(yolov5x)
     exp.add_model(ssd)
-    exp.run_experiment()
+    #exp.run_experiment()
     exp.evaluate_results()
     exp.plot_results()

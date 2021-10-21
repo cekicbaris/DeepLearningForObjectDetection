@@ -49,21 +49,23 @@ DEFAULT_IMAGES = [
 # streamlit settings. 
 DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 
+
+YOLOV5S = 'yolov5s'
+YOLOV3 = 'yolov3'
+YOLOV5X = 'yolov5x'
+FASTERRCNN = 'faster_rcnn'
+MASK_RCNN = 'mask_rcnn'
+RETINA_NET = 'retinanet'
+SINGLESHOTDETECTOR = 'SSD'
+
 MODELS = [
-    {'model_id': 'yolov5s', 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json','model_definition' : 'YOLO(version="V5s")'},
-    {'model_id': 'yolov3', 'model_name': 'YOLO v3', 'filename':'YOLOV3.json','model_definition' : 'YOLO(version="V3")'},
-    {'model_id': 'yolov5x', 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json','model_definition' : 'YOLO(version="V5x")'},      
-    {'model_id': 'faster_rcnn', 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json' , 'model_definition' : 'FasterRCNN()'},
-    {'model_id': 'mask_rcnn', 'model_name': 'Mask RCNN', 'filename':'mask_rcnn.json' , 'model_definition' : 'MaskRCNN()'},
-    {'model_id': 'retinanet', 'model_name': 'RetinaNet', 'filename':'RetinaNet.json','model_definition' : 'RetinaNet()'},
-    {'model_id': 'ssd', 'model_name': 'SSD', 'filename':'SSD.json', 'model_definition' : 'RetinaNet()'},
+    {'model_id': YOLOV5S, 'model_name': 'YOLO v5s', 'filename':'YOLOV5s.json','model_definition' : 'YOLO(version="V5s")'},
+    {'model_id': YOLOV3 , 'model_name': 'YOLO v3', 'filename':'YOLOV3.json','model_definition' : 'YOLO(version="V3")'},
+    {'model_id': YOLOV5X, 'model_name': 'YOLO v5x', 'filename':'YOLOV5x.json','model_definition' : 'YOLO(version="V5x")'},      
+    {'model_id': FASTERRCNN, 'model_name': 'Faster RCNN', 'filename':'faster_rcnn.json' , 'model_definition' : 'FasterRCNN()'},
+    {'model_id': MASK_RCNN, 'model_name': 'Mask RCNN', 'filename':'mask_rcnn.json' , 'model_definition' : 'MaskRCNN()'},
+    {'model_id': RETINA_NET, 'model_name': 'RetinaNet', 'filename':'RetinaNet.json','model_definition' : 'RetinaNet()'},
+    {'model_id': SINGLESHOTDETECTOR, 'model_name': 'SSD', 'filename':'SSD.json', 'model_definition' : 'RetinaNet()'},
    
 ]
 
-FASTERRCNN = MODELS[0]['model_id']
-MASKRCNN = MODELS[1]['model_id']
-RETINANET = MODELS[2]['model_id']
-SINGLESHOTDETECTOR  = MODELS[3]['model_id']
-YOLOV3 = MODELS[4]['model_id']
-YOLOV5S = MODELS[5]['model_id']
-YOLOV5X = MODELS[6]['model_id']
