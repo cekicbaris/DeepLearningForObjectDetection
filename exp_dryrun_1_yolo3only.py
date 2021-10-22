@@ -1,5 +1,6 @@
 from numpy import mod
 from experiment import *
+import os
 
 exp = Experiment(name="All_Models_Dry_Run", dry_run=True)
 
@@ -9,3 +10,5 @@ exp.run_experiment()
 
 exp.evaluate_results()
 exp.plot_results() # some models inference are higher than 5sec in CPU.
+
+os.system("mv 'experiments/" + str(exp.experiment_name) + "/stats/stats.json' 'experiments/" + str(exp.experiment_name) + "/stats/stats_yolov3.json' ")
