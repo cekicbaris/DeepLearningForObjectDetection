@@ -14,6 +14,7 @@ coco_val_images_url = "http://images.cocodataset.org/zips/val2017.zip"
 coco_val_images_local_file = 'tmp/val2017.zip'
 
 # COCO Annotations
+os.system("mkdir tmp")
 if not Path(COCO_VALIDATION_SET_FILE).exists():
     os.system(f"curl -L '{coco_annotations_url}' -o '{coco_annocations_local_file}' --retry 3 -C -")
     os.system(f"unzip -o '{coco_annocations_local_file}' -d ./dataset/")
