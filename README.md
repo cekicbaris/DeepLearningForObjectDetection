@@ -16,7 +16,12 @@ Setup
 Run and Existing Experiment
 * `python3 exp_prodK80_all.py`
 
-Conduct a new experiment
+
+Experiment Jupyter notebook is also delivered.
+* `experiment.ipynb`
+
+T0 a new experiment, create a new python file and add following
+
 ```
 
 from experiment import *
@@ -37,7 +42,6 @@ exp.add_model(faster_rcnn)
 exp.add_model(retinanet)
 exp.add_model(ssd)
 
-
 exp.run_experiment()
 exp.evaluate_results()
 
@@ -48,8 +52,10 @@ exp.plot_results(scale=6000) # some models inference are higher than 5sec in CPU
 
 
 To run Object Detection Web App
+
 `streamlit run app.py`
 
 To Run Object Detection Rest API
+
 `uvicorn restAPI:app --reload`
 

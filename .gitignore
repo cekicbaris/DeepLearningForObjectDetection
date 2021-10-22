@@ -8,6 +8,6 @@ input/*
 dataset/input*
 dataset/output*
 dataset/annotations*
-experiments/*
+experiments/backup*
 *.env
 *.old
