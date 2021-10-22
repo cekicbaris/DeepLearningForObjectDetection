@@ -200,7 +200,7 @@ class YOLO(Detection):
     YOLO implementation of of Detection Experiment Framework
     https://pytorch.org/hub/ultralytics_yolov5/
     """   
-    def __init__(self, version='V3'):
+    def __init__(self, version='V3', model_name_only=False):
         super().__init__()
         self.version = version.lower()
         if self.version == 'v5s':
@@ -217,7 +217,10 @@ class YOLO(Detection):
             self.modelname = YOLOV3
         
         # Model
-        self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True, )
+        if model_name_only:
+            self.model = ""
+        else:
+            self.model = torch.hub.load(model_to_load, version_to_load, pretrained=True, )
 
     def predict(self, image):
         """
@@ -300,7 +303,7 @@ class Experiment():
         for model in self.models:
             self.stats_collector.save_eval(model.modelname, model.evaluations)
     
-    def evaluate_results(self):
+    def evaluate_results(self, previous_result_to_merge=None):
         """
         This method is responsible to generate mAP, mAR for MSCOCO style IoU thresholds and  inference type in ms. 
         """
@@ -319,7 +322,10 @@ class Experiment():
         self.stats_collector.measures = stats
         self.stats_collector.save_measures()
 
+        
         stat_files = [self.stats_collector.stat_file]
+        if previous_result_to_merge:
+            stat_files = [self.stats_collector.stat_file,previous_result_to_merge]
         stat_dfs = [pd.read_json(file) for file in stat_files]
         final_df = pd.concat(stat_dfs, axis=1)
         describe_num_df = final_df.describe().drop(columns=['name'])
@@ -350,6 +356,9 @@ class Experiment():
 
         filename = self.experiment_folder + config.MODEL_SUMMARY_PLOT
         plt.savefig(filename)
+        print("Result file :", filename)
+        print("Experiment folder :",  self.experiment_folder)
+
 
 if __name__ == "__main__":
     """
