@@ -53,9 +53,9 @@ exp.plot_results(scale=6000) # some models inference are higher than 5sec in CPU
 
 To run Object Detection Web App
 
-`streamlit run app.py`
+* `streamlit run app.py`
 
 To Run Object Detection Rest API
 
-`uvicorn restAPI:app --reload`
+* `uvicorn restAPI:app --reload`
 
