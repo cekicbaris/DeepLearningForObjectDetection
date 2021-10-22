@@ -22,7 +22,7 @@ COCO_NAMES = [
 
 # Stat collector settings
 IMG_INPUT_FOLDER = "dataset/input/val2017/"
-IMG_INPUT_FOLDER_DRY_RUN = "dataset/input_small/"
+IMG_INPUT_FOLDER_DRY_RUN = "dataset/dryrun/"
 IMG_OUTPUT_FOLDER = "dataset/output/"
 EVALUATION_FOLDER = "eval/"
 IMG_EXTENSION = ".jpg"
