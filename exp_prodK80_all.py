@@ -1,5 +1,4 @@
 
-from numpy import mod
 from experiment import *
 
 exp = Experiment(name="Prod Run-K80", dry_run=False)

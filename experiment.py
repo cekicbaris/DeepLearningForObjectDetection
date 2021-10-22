@@ -303,7 +303,7 @@ class Experiment():
         for model in self.models:
             self.stats_collector.save_eval(model.modelname, model.evaluations)
     
-    def evaluate_results(self, previous_result_to_merge=None):
+    def evaluate_results(self, previous_result_to_merge=None, by_category=True):
         """
         This method is responsible to generate mAP, mAR for MSCOCO style IoU thresholds and  inference type in ms. 
         """
@@ -312,7 +312,7 @@ class Experiment():
         
         for model in self.models:
             print("ModelName : \t", model.modelname + "_________________________________________")
-            stat = evaluate(model.modelname, detections_file = self.experiment_folder + 'eval/' +  model.modelname + '.json',by_category=True, image_ids=self.dataset.image_ids )
+            stat = evaluate(model.modelname, detections_file = self.experiment_folder + 'eval/' +  model.modelname + '.json',by_category=by_category, image_ids=self.dataset.image_ids )
             model_summary = {}
             model_summary['model_name'] = model.modelname
             model_summary['AP'] = stat[0]['AP']
